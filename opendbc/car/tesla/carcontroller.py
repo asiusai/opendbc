@@ -25,7 +25,6 @@ class CarController(CarControllerBase):
     self.tesla_can = TeslaCAN(CP, self.packer)
     self._params = Params()
     self.coop_steering = self._params.get_bool("TeslaCoopSteering")
-    self.lkas_steering = self._params.get_bool("TeslaLkasSteering")
     self.lateral_only = self._params.get_bool("LateralOnly")
     self.coop_steer = CoopSteeringCarController()
 
@@ -49,8 +48,8 @@ class CarController(CarControllerBase):
       self.apply_angle_last = apply_steer_angle_limits_vm(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw, CS.out.steeringAngleDeg,
                                                           lat_active, CarControllerParams, self.VM)
 
-      if self.coop_steering or self.lkas_steering:
-        coop_result = self.coop_steer.update(self.apply_angle_last, lat_active, self.coop_steering, self.lkas_steering, CS, self.VM)
+      if self.coop_steering:
+        coop_result = self.coop_steer.update(self.apply_angle_last, lat_active, CS, self.VM)
         can_sends.append(self.tesla_can.create_steering_control(*coop_result))
       else:
         can_sends.append(self.tesla_can.create_steering_control(self.apply_angle_last, lat_active))
