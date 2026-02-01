@@ -58,10 +58,14 @@ class CarController(CarControllerBase):
     if self.frame % 10 == 0:
       can_sends.append(self.tesla_can.create_steering_allowed())
 
-    # Longitudinal control (skip entirely in lateral-only mode to let the car coast with regen)
+    # Longitudinal control
     if self.CP.openpilotLongitudinalControl:
-      if not self.lateral_only:
-        if self.frame % 4 == 0:
+      if self.frame % 4 == 0:
+        if self.lateral_only:
+          # Keep sending DAS_control to maintain panda heartbeat, but cancel ACC and send zero accel
+          cntr = (self.frame // 4) % 8
+          can_sends.append(self.tesla_can.create_longitudinal_command(13, 0, cntr, CS.out.vEgo, False))
+        else:
           state = 13 if CC.cruiseControl.cancel else 4  # 4=ACC_ON, 13=ACC_CANCEL_GENERIC_SILENT
           accel = float(np.clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX))
           cntr = (self.frame // 4) % 8
