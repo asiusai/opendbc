@@ -5,6 +5,7 @@ from opendbc.car.lateral import apply_steer_angle_limits_vm
 from opendbc.car.interfaces import CarControllerBase
 from opendbc.car.tesla.teslacan import TeslaCAN
 from opendbc.car.tesla.values import CarControllerParams
+from opendbc.car.tesla.coop_steering import CoopSteeringCarController
 from opendbc.car.vehicle_model import VehicleModel
 from openpilot.common.params import Params
 
@@ -24,7 +25,9 @@ class CarController(CarControllerBase):
     self.tesla_can = TeslaCAN(CP, self.packer)
     self._params = Params()
     self.coop_steering = self._params.get_bool("TeslaCoopSteering")
+    self.lkas_steering = self._params.get_bool("TeslaLkasSteering")
     self.lateral_only = self._params.get_bool("LateralOnly")
+    self.coop_steer = CoopSteeringCarController()
 
     # Vehicle model used for lateral limiting
     self.VM = VehicleModel(get_safety_CP())
@@ -41,13 +44,16 @@ class CarController(CarControllerBase):
     # Canceling is done on rising edge and is handled generically with CC.cruiseControl.cancel
     lat_active = CC.latActive and CS.hands_on_level < 3
 
-    if self.frame % 2 == 0:
+    if self.frame % CarControllerParams.STEER_STEP == 0:
       # Angular rate limit based on speed
       self.apply_angle_last = apply_steer_angle_limits_vm(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw, CS.out.steeringAngleDeg,
                                                           lat_active, CarControllerParams, self.VM)
 
-      control_type = 2 if self.coop_steering else 1
-      can_sends.append(self.tesla_can.create_steering_control(self.apply_angle_last, lat_active, control_type))
+      if self.coop_steering or self.lkas_steering:
+        coop_result = self.coop_steer.update(self.apply_angle_last, lat_active, self.coop_steering, self.lkas_steering, CS, self.VM)
+        can_sends.append(self.tesla_can.create_steering_control(*coop_result))
+      else:
+        can_sends.append(self.tesla_can.create_steering_control(self.apply_angle_last, lat_active))
 
     if self.frame % 10 == 0:
       can_sends.append(self.tesla_can.create_steering_allowed())
