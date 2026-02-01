@@ -61,15 +61,16 @@ class CarController(CarControllerBase):
     # Longitudinal control
     if self.CP.openpilotLongitudinalControl:
       if self.frame % 4 == 0:
-        if self.lateral_only:
-          # Keep sending DAS_control to maintain panda heartbeat, but cancel ACC and send zero accel
-          cntr = (self.frame // 4) % 8
-          can_sends.append(self.tesla_can.create_longitudinal_command(13, 0, cntr, CS.out.vEgo, False))
-        else:
-          state = 13 if CC.cruiseControl.cancel else 4  # 4=ACC_ON, 13=ACC_CANCEL_GENERIC_SILENT
-          accel = float(np.clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX))
-          cntr = (self.frame // 4) % 8
-          can_sends.append(self.tesla_can.create_longitudinal_command(state, accel, cntr, CS.out.vEgo, CC.longActive))
+        state = 13 if CC.cruiseControl.cancel else 4  # 4=ACC_ON, 13=ACC_CANCEL_GENERIC_SILENT
+        accel = float(np.clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX))
+        long_active = CC.longActive
+        if self.lateral_only and CC.enabled:
+          # In lateral-only mode: keep ACC flow normal for engagement, but command gentle regen
+          # so the car decelerates naturally instead of holding speed (accel=0 holds speed on Tesla)
+          accel = -0.5
+          long_active = True
+        cntr = (self.frame // 4) % 8
+        can_sends.append(self.tesla_can.create_longitudinal_command(state, accel, cntr, CS.out.vEgo, long_active))
     else:
       # Increment counter so cancel is prioritized even without openpilot longitudinal
       if CC.cruiseControl.cancel:
