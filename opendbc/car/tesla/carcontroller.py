@@ -65,8 +65,9 @@ class CarController(CarControllerBase):
         accel = float(np.clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX))
         long_active = CC.longActive
         if self.lateral_only and CC.enabled:
-          # In lateral-only mode: keep ACC flow normal for engagement, but command gentle regen
-          # so the car decelerates naturally instead of holding speed (accel=0 holds speed on Tesla)
+          # Lateral-only: keep ACC_ON (state=4) so cruise doesn't fault, command gentle regen
+          # active=True + accel<0 makes DAS_setSpeed=0 in teslacan, so car targets 0 = regen decel
+          state = 4
           accel = -0.5
           long_active = True
         cntr = (self.frame // 4) % 8
