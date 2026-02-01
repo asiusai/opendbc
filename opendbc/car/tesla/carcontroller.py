@@ -25,16 +25,12 @@ class CarController(CarControllerBase):
     self.tesla_can = TeslaCAN(CP, self.packer)
     self._params = Params()
     self.coop_steering = self._params.get_bool("TeslaCoopSteering")
-    self.lateral_only = self._params.get_bool("LateralOnly")
     self.coop_steer = CoopSteeringCarController()
 
     # Vehicle model used for lateral limiting
     self.VM = VehicleModel(get_safety_CP())
 
   def update(self, CC, CS, now_nanos):
-    if self.frame % 250 == 0:
-      self.lateral_only = self._params.get_bool("LateralOnly")
-
     actuators = CC.actuators
     can_sends = []
 
@@ -62,20 +58,8 @@ class CarController(CarControllerBase):
       if self.frame % 4 == 0:
         state = 13 if CC.cruiseControl.cancel else 4  # 4=ACC_ON, 13=ACC_CANCEL_GENERIC_SILENT
         accel = float(np.clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX))
-        long_active = CC.longActive
-        if self.lateral_only and CC.enabled:
-          # Lateral-only: keep ACC_ON (state=4) so cruise doesn't fault, command gentle regen
-          # active=True + accel<0 makes DAS_setSpeed=0 in teslacan, so car targets 0 = regen decel
-          state = 4
-          if CS.out.gasPressed:
-            # When driver presses gas, don't fight it — zero accel avoids cruise fault
-            accel = 0
-            long_active = False
-          else:
-            accel = -0.5
-            long_active = True
         cntr = (self.frame // 4) % 8
-        can_sends.append(self.tesla_can.create_longitudinal_command(state, accel, cntr, CS.out.vEgo, long_active))
+        can_sends.append(self.tesla_can.create_longitudinal_command(state, accel, cntr, CS.out.vEgo, CC.longActive))
     else:
       # Increment counter so cancel is prioritized even without openpilot longitudinal
       if CC.cruiseControl.cancel:
