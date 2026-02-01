@@ -68,8 +68,13 @@ class CarController(CarControllerBase):
           # Lateral-only: keep ACC_ON (state=4) so cruise doesn't fault, command gentle regen
           # active=True + accel<0 makes DAS_setSpeed=0 in teslacan, so car targets 0 = regen decel
           state = 4
-          accel = -0.5
-          long_active = True
+          if CS.out.gasPressed:
+            # When driver presses gas, don't fight it — zero accel avoids cruise fault
+            accel = 0
+            long_active = False
+          else:
+            accel = -0.5
+            long_active = True
         cntr = (self.frame // 4) % 8
         can_sends.append(self.tesla_can.create_longitudinal_command(state, accel, cntr, CS.out.vEgo, long_active))
     else:
