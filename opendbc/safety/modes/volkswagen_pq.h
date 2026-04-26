@@ -48,10 +48,10 @@ static uint32_t volkswagen_pq_compute_checksum(const CANPacket_t *msg) {
 
 static safety_config volkswagen_pq_init(uint16_t param) {
   // Transmit of GRA_Neu is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-  static const CanMsg VOLKSWAGEN_PQ_STOCK_TX_MSGS[] = {{MSG_HCA_1, 1, 5, .check_relay = false}, {MSG_LDW_1, 1, 8, .check_relay = false},
+  static const CanMsg VOLKSWAGEN_PQ_STOCK_TX_MSGS[] = {{MSG_HCA_1, 2, 5, .check_relay = false}, {MSG_LDW_1, 2, 8, .check_relay = false},
                                                 {MSG_GRA_NEU, 1, 4, .check_relay = false}, {MSG_GRA_NEU, 2, 4, .check_relay = false}};
 
-  static const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 1, 5, .check_relay = false}, {MSG_LDW_1, 1, 8, .check_relay = false},
+  static const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 2, 5, .check_relay = false}, {MSG_LDW_1, 2, 8, .check_relay = false},
                                                 {MSG_ACC_SYSTEM, 1, 8, .check_relay = false}, {MSG_ACC_GRA_ANZEIGE, 1, 8, .check_relay = false}};
 
   static RxCheck volkswagen_pq_rx_checks[] = {
