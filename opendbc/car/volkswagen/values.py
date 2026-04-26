@@ -27,14 +27,11 @@ class CanBus(CanBusBase):
 
   @property
   def pt(self) -> int:
-    # ADAS / Extended CAN, gateway side of the relay
-    return self.offset
+    return self.offset + 1
 
   @property
   def alt(self) -> int:
-    # NetworkLocation.fwdCamera: radar-camera object fusion CAN
-    # NetworkLocation.gateway: powertrain CAN
-    return self.offset + 1
+    return self.offset
 
   @property
   def cam(self) -> int:
@@ -401,9 +398,9 @@ class CAR(Platforms):
   )
   VOLKSWAGEN_JETTA_MK6 = VolkswagenPQPlatformConfig(
     [VWCarDocs("Volkswagen Jetta 2015-18")],
-    VolkswagenCarSpecs(mass=1518, wheelbase=2.65, minSteerSpeed=50 * CV.KPH_TO_MS, minEnableSpeed=20 * CV.KPH_TO_MS),
+    VolkswagenCarSpecs(mass=1518, wheelbase=2.65, minSteerSpeed=0, minEnableSpeed=0),
     chassis_codes={"5K", "AJ"},
-    wmis={WMI.VOLKSWAGEN_MEXICO_CAR},
+    wmis={WMI.VOLKSWAGEN_MEXICO_CAR, WMI.VOLKSWAGEN_EUROPE_CAR},
   )
   VOLKSWAGEN_JETTA_MK7 = VolkswagenMQBPlatformConfig(
     [
