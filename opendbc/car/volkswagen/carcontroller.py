@@ -111,8 +111,7 @@ class CarController(CarControllerBase):
         apply_torque = self.hca_mitigation.update(apply_torque, self.apply_torque_last)
         hca_enabled = apply_torque != 0
         self.apply_torque_last = apply_torque
-        steer_bus = self.CAN.cam if self.CP.flags & VolkswagenFlags.PQ else self.CAN.pt
-        can_sends.append(self.CCS.create_steering_control(self.packer_pt, steer_bus, apply_torque, hca_enabled))
+        can_sends.append(self.CCS.create_steering_control(self.packer_pt, self.CAN.pt, apply_torque, hca_enabled))
 
       if self.CP.flags & VolkswagenFlags.STOCK_HCA_PRESENT:
         # Pacify VW Emergency Assist driver inactivity detection by changing its view of driver steering input torque
@@ -166,8 +165,7 @@ class CarController(CarControllerBase):
       hud_alert = 0
       if hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw):
         hud_alert = self.CCP.LDW_MESSAGES["laneAssistTakeOver"]
-      lka_bus = self.CAN.cam if self.CP.flags & VolkswagenFlags.PQ else self.CAN.pt
-      can_sends.append(self.CCS.create_lka_hud_control(self.packer_pt, lka_bus, CS.ldw_stock_values, CC.latActive,
+      can_sends.append(self.CCS.create_lka_hud_control(self.packer_pt, self.CAN.pt, CS.ldw_stock_values, CC.latActive,
                                                        CS.out.steeringPressed, hud_alert, hud_control))
 
     if hud_control.leadDistanceBars != self.lead_distance_bars_last:
