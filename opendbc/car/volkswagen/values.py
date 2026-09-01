@@ -399,7 +399,7 @@ class CAR(Platforms):
   VOLKSWAGEN_JETTA_MK6 = VolkswagenPQPlatformConfig(
     [VWCarDocs("Volkswagen Jetta 2015-18")],
     VolkswagenCarSpecs(mass=1518, wheelbase=2.65, minSteerSpeed=0, minEnableSpeed=0),
-    chassis_codes={"5K", "AJ"},
+    chassis_codes={"1K", "5K", "AJ"},
     wmis={WMI.VOLKSWAGEN_MEXICO_CAR, WMI.VOLKSWAGEN_EUROPE_CAR},
   )
   VOLKSWAGEN_JETTA_MK7 = VolkswagenMQBPlatformConfig(
@@ -598,6 +598,16 @@ def match_fw_to_car_fuzzy(live_fw_versions, vin, offline_fw_versions) -> set[str
   chassis_code = vin_obj.vds[3:5]
 
   for platform in CAR:
+    valid_vin = vin_obj.wmi in platform.config.wmis and chassis_code in platform.config.chassis_codes
+
+    # PQ35 Golfs without factory ACC have no radar response. Match the known
+    # SRS firmware instead, together with the Volkswagen WMI and 1K chassis.
+    if platform == CAR.VOLKSWAGEN_JETTA_MK6 and valid_vin:
+      srs = (Ecu.srs, 0x715, None)
+      if any(version in offline_fw_versions[platform][srs] for version in live_fw_versions.get(srs[1:], [])):
+        candidates.add(platform)
+        continue
+
     valid_ecus = set()
     for ecu in offline_fw_versions[platform]:
       addr = ecu[1:]
@@ -615,7 +625,7 @@ def match_fw_to_car_fuzzy(live_fw_versions, vin, offline_fw_versions) -> set[str
     if valid_ecus != CHECK_FUZZY_ECUS:
       continue
 
-    if vin_obj.wmi in platform.config.wmis and chassis_code in platform.config.chassis_codes:
+    if valid_vin:
       candidates.add(platform)
 
   return {str(c) for c in candidates}

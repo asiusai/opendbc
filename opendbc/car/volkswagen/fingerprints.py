@@ -386,6 +386,7 @@ FW_VERSIONS = {
   },
   CAR.VOLKSWAGEN_JETTA_MK6: {
     (Ecu.srs, 0x715, None): [
+      b'\xf1\x875C0959655B \xf1\x890613\xf1\x82\t00D11602--------06',
       b'\xf1\x875C0959655M \xf1\x890726\xf1\x82\t00NB1108--------24',
       b'\xf1\x875K0959655H \xf1\x890724\xf1\x82\t00131108--------02',
     ],

@@ -75,3 +75,10 @@ class TestVolkswagenPlatformConfigs(unittest.TestCase):
 
               expected_matches = {platform} if should_match else set()
               assert expected_matches == matches, "Bad match"
+
+  def test_pq35_golf_without_radar_fingerprinting(self):
+    srs_fw = b'\xf1\x875C0959655B \xf1\x890613\xf1\x82\t00D11602--------06'
+    live_fws = {(0x715, None): [srs_fw]}
+
+    assert FW_QUERY_CONFIG.match_fw_to_car_fuzzy(live_fws, "WVWZZZ1KZCP061936", FW_VERSIONS) == {CAR.VOLKSWAGEN_JETTA_MK6}
+    assert FW_QUERY_CONFIG.match_fw_to_car_fuzzy(live_fws, "WVWZZZ00ZCP061936", FW_VERSIONS) == set()
