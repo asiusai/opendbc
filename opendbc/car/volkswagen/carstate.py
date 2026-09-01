@@ -159,7 +159,7 @@ class CarState(CarStateBase):
     ret.steeringTorque = pt_cp.vl["Lenkhilfe_3"]["LH3_LM"] * (1, -1)[int(pt_cp.vl["Lenkhilfe_3"]["LH3_LMSign"])]
     ret.steeringPressed = abs(ret.steeringTorque) > self.CCP.STEER_DRIVER_ALLOWANCE
     hca_status = self.CCP.hca_status_values.get(pt_cp.vl["Lenkhilfe_2"]["LH2_Sta_HCA"])
-    ret.steerFaultTemporary, ret.steerFaultPermanent = False, False
+    ret.steerFaultTemporary, ret.steerFaultPermanent = self.update_hca_state(hca_status)
 
     # Update gas, brakes, and gearshift.
     ret.gasPressed = pt_cp.vl["Motor_3"]["MO3_Pedalwert"] > 0
